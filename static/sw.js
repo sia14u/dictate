@@ -1,4 +1,4 @@
-const C = "dictate-v1"; const SHELL = ["/", "/app.js", "/app.css", "/manifest.webmanifest", "/icon-192.png"];
+const C = "dictate-v1"; const SHELL = ["/", "/app.js", "/app.css", "/manifest.webmanifest", "/icon.svg"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(C).then(c => c.addAll(SHELL))); self.skipWaiting(); });
 self.addEventListener("activate", e => e.waitUntil(self.clients.claim()));
 self.addEventListener("fetch", e => {

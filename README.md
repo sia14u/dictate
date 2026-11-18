@@ -29,6 +29,7 @@ Say **"Dictate"** to start (or **"Stop dictation"** to stop), or use the on-scre
 ```bash
 git clone https://github.com/sia14u/dictate.git
 cd dictate
+chmod +x setup.sh start.sh stop.sh
 ./setup.sh
 ./start.sh
 ```
@@ -43,6 +44,7 @@ Then open [http://localhost:8765](http://localhost:8765). `start.sh` also prints
 brew install ffmpeg python@3.12 cloudflared
 git clone https://github.com/sia14u/dictate.git
 cd dictate
+chmod +x setup.sh start.sh stop.sh
 ./setup.sh
 DICTATE_COMPUTE=int8 ./start.sh
 ```

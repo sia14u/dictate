@@ -1,0 +1,19 @@
+fastapi>=0.110
+uvicorn>=0.27
+python-multipart>=0.0.9
+faster-whisper>=1.1
+ctranslate2>=4.5
+transformers>=4.45,<5
+sentencepiece
+argostranslate>=1.9
+speechbrain>=1.0
+scikit-learn
+torch
+torchaudio
+python-docx
+piper-tts>=1.3
+huggingface_hub
+numpy
+requests
+gTTS            # only used to generate test samples
+# optional: pyannote.audio  (better diarization; needs a free Hugging Face token in HF_TOKEN)

@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dictate</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Dictate">
+<link rel="apple-touch-icon" href="/icon-180.png">
+<link rel="icon" href="/icon-192.png">
+<link rel="stylesheet" href="/app.css">
+</head>
+<body>
+<header>
+  <h1>🎙️ Dictate</h1>
+  <span id="pill" class="pill idle">Idle</span>
+</header>
+
+<main>
+  <section class="card settings">
+    <div class="row">
+      <label>I'm speaking
+        <select id="speakLang"></select>
+      </label>
+      <label>Translate to
+        <select id="targetLang"></select>
+      </label>
+    </div>
+    <div class="row toggles">
+      <label class="tog"><input type="checkbox" id="optClean" checked> Clean paragraphs</label>
+      <label class="tog"><input type="checkbox" id="optTimes"> Timestamps</label>
+      <label class="tog"><input type="checkbox" id="optDiar"> Speakers</label>
+      <label class="tog small" id="spkWrap">#
+        <select id="optSpk"><option value="0">auto</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option></select>
+      </label>
+      <label class="tog"><input type="checkbox" id="optSum"> Summary</label>
+    </div>
+    <details>
+      <summary>More options</summary>
+      <div class="row">
+        <label>Accuracy (Whisper model)
+          <select id="optModel">
+            <option value="base">Fast (base)</option>
+            <option value="small" selected>Balanced (small)</option>
+            <option value="medium">Best, slow (medium)</option>
+          </select>
+        </label>
+        <label>Translator
+          <select id="optEngine">
+            <option value="auto" selected>Auto (Whisper for → English, NLLB-200 otherwise)</option>
+            <option value="nllb">NLLB-200 (local)</option>
+            <option value="argos">Argos (lighter, local)</option>
+            <option value="whisper">Whisper (to English only)</option>
+          </select>
+        </label>
+        <label>Wake word engine
+          <select id="optWake">
+            <option value="auto" selected>Auto (browser speech, else offline Vosk)</option>
+            <option value="webspeech">Browser speech recognition</option>
+            <option value="vosk">Offline Vosk (English “Dictate”, ~40 MB one-time)</option>
+          </select>
+        </label>
+        <label>Read-aloud voice
+          <select id="optVoice">
+            <option value="piper" selected>Piper (offline, server)</option>
+            <option value="device">Device voice (iPhone/Mac built-in)</option>
+          </select>
+        </label>
+        <label>Summary language
+          <select id="optSumLang"><option value="en">English</option><option value="ko">Korean</option><option value="same">Same as speech</option></select>
+        </label>
+      </div>
+      <label class="tog"><input type="checkbox" id="optRecord" checked> Also record audio during live dictation (needed for Speakers / Whisper re-check)</label>
+    </details>
+  </section>
+
+  <nav class="tabs">
+    <button class="tab active" data-tab="live">Live dictation</button>
+    <button class="tab" data-tab="file">Upload file</button>
+  </nav>
+
+  <section id="tab-live" class="card">
+    <p class="hint" id="liveHint">Turn on <b>Hands-free</b>, then say <b>“Dictate”</b> to start and <b>“Stop dictation”</b> to finish. Or just tap the mic.</p>
+    <div class="row center">
+      <button id="wakeBtn" class="btn ghost">👂 Hands-free: Off</button>
+      <button id="micBtn" class="mic" aria-label="Start dictation">🎤</button>
+      <button id="clearBtn" class="btn ghost">Clear</button>
+    </div>
+    <div id="interim" class="interim"></div>
+    <div class="row center" id="liveAfter" hidden>
+      <button id="processRec" class="btn">✨ Re-check with Whisper (speakers / summary)</button>
+      <button id="sumLive" class="btn ghost">📝 Summarize text</button>
+    </div>
+  </section>
+
+  <section id="tab-file" class="card" hidden>
+    <label id="drop" class="drop">
+      <input type="file" id="fileIn" accept="audio/*,video/*,.mp3,.wav,.aac,.m4a,.flac,.ogg,.oga,.opus,.wma,.aif,.aiff,.amr,.3gp,.webm,.mp4,.m4v,.mov,.mkv,.avi,.wmv,.flv,.mpg,.mpeg,.ts,.mts,.caf">
+      <span>📁 Tap to choose, or drop an audio/video file<br><small>MP3 WAV AAC M4A FLAC OGG OPUS WMA AIFF AMR WEBM MP4 MOV MKV AVI … up to 2 GB</small></span>
+    </label>
+    <div id="progWrap" hidden>
+      <div class="progress"><div id="progBar"></div></div>
+      <div id="progText" class="hint"></div>
+    </div>
+  </section>
+
+  <section id="results" class="card" hidden>
+    <div class="row between">
+      <h2>Result <small id="meta"></small></h2>
+    </div>
+    <div id="speakers" class="speakers" hidden></div>
+    <div id="summaryBox" class="summary" hidden></div>
+    <div class="cols">
+      <div class="col">
+        <div class="colhead">Original <span id="origLang"></span> <button class="mini" data-say="orig">🔊</button><button class="mini" data-copy="orig">Copy</button></div>
+        <div id="orig" class="text" contenteditable="true"></div>
+      </div>
+      <div class="col">
+        <div class="colhead">Translation <span id="trLang"></span> <button class="mini" data-say="tr">🔊</button><button class="mini" data-copy="tr">Copy</button></div>
+        <div id="tr" class="text" contenteditable="true"></div>
+      </div>
+    </div>
+    <div class="exports">
+      <span>Download:</span>
+      <select id="expWhich"><option value="both">Original + translation</option><option value="orig">Original</option><option value="tr">Translation</option></select>
+      <button class="btn small" data-exp="txt">.txt</button>
+      <button class="btn small" data-exp="md">.md</button>
+      <button class="btn small" data-exp="docx">.docx</button>
+      <button class="btn small" data-exp="srt">.srt</button>
+      <button class="btn small" data-exp="vtt">.vtt</button>
+    </div>
+  </section>
+  <p class="foot">Free &amp; local: faster-whisper · NLLB-200 / Argos · Qwen2.5 · SpeechBrain (pyannote optional) · Piper · Vosk · FFmpeg. No paid APIs.</p>
+</main>
+<div id="toast" class="toast" hidden></div>
+<script src="/app.js"></script>
+</body>
+</html>
